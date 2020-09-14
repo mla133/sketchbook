@@ -31,8 +31,6 @@
  *  from www.silabs.com although, strictly speaking it is not a requirment to understand this code. 
  *  Instead, you can look up the Si5351 library written by Jason Mildrum, NT7S. You can download and 
  *  install it from https://github.com/etherkit/Si5351Arduino to complile this file.
- *  NOTE: This sketch is based on version V2 of the Si5351 library. It will not compile with V1!
- *  
  *  The Wire.h library is used to talk to the Si5351 and we also declare an instance of 
  *  Si5351 object to control the clocks.
  */
@@ -157,19 +155,10 @@ unsigned char txFilter = 0;
 /** Tuning Mechanism of the Raduino
  *  We use a linear pot that has two ends connected to +5 and the ground. the middle wiper
  *  is connected to ANALOG_TUNNING pin. Depending upon the position of the wiper, the
- *  reading can be anywhere from 0 to 1023.
- *  If we want to use a multi-turn potentiometer with a tuning range of 500 kHz and a step
- *  size of 50 Hz we need 10,000 steps which is about 10x more than the steps that the ADC 
- *  provides. Arduino's ADC has 10 bits which results in 1024 steps only. 
- *  We can artificially expand the number of steps by a factor 10 by oversampling 100 times.
- *  As a result we get 10240 steps.
- *  The tuning control works in steps of 50Hz each for every increment between 10 and 10230.
- *  Hence the turning the pot fully from one end to the other will cover 50 x 10220 = 511 KHz.
- *  But if we use the standard 1-turn pot, then a tuning range of 500 kHz would be too much.
- *  (tuning would become very touchy). In the next few lines we can limit the tuning range
- *  depending on the potentiometer used and the band section of interest. Tuning beyond the
- *  limits is still possible by the 'scan-up' and 'scan-down' mode at the end of the pot.
- *  At the two ends, that is, the tuning starts stepping up or down in 10 KHz steps. 
+ *  reading can be anywhere from 0 to 1024.
+ *  The tuning control works in steps of 50Hz each for every increment between 50 and 950.
+ *  Hence the turning the pot fully from one end to the other will cover 50 x 900 = 45 KHz.
+ *  At the two ends, that is, the tuning starts slowly stepping up or down in 10 KHz steps 
  *  To stop the scanning the pot is moved back from the edge. 
  *  To rapidly change from one band to another, you press the function button and then
  *  move the tuning pot. Now, instead of 50 Hz, the tuning is in steps of 50 KHz allowing you
@@ -179,27 +168,15 @@ unsigned char txFilter = 0;
  *  the frequency.
  */
 
-// TUNING RANGE SETTINGS
-// standard setting for 1-turn potentiometer: TUNING_RANGE 50, baseTune 7100000L (7.100 - 7.150)
-// for 10-turn pot: recommended value for TUNING-RANGE is 200, baseTune 7000000L (7.000 - 7.200)
-// If you are in ITU Region 2, you may want to use a TUNING_RANGE of 300 kHz to cover the entire
-// 40m band (7.000 - 7.300).
-// But of course you can change the settings to what suits you best.
-
-#define TUNING_RANGE (50) // tuning range (in kHz) of the tuning pot  
-unsigned long baseTune =  7100000L; // frequency (Hz) when tuning pot is at minimum position
-
-//
-//
-
 #define INIT_BFO_FREQ (1199800L)
+unsigned long baseTune =  7100000L;
 unsigned long bfo_freq = 11998000L;
+
 int  old_knob = 0;
 
 #define CW_OFFSET (800l)
-
-#define LOWEST_FREQ  (6995000L) // absolute minimum frequency (Hz)
-#define HIGHEST_FREQ (7500000L) //  absolute maximum frequency (Hz)
+#define LOWEST_FREQ  (6995000l)
+#define HIGHEST_FREQ (7500000l)
 
 long frequency, stepSize=100000;
 
@@ -241,15 +218,8 @@ void printLine2(char *c){
  */
 
 void updateDisplay(){
-    float ver = 0.1;
-    char *d, *e;
     sprintf(b, "%08ld", frequency);      
     sprintf(c, "%s:%.2s.%.4s", vfoActive == VFO_A ? "A" : "B" , b,  b+2);
-    
-    sprintf(d, "KC3EYS");
-    sprintf(e, " %2.1f", ver);
-    strcat(d, e);    
-
     if (isUSB)
       strcat(c, " USB");
     else
@@ -263,7 +233,6 @@ void updateDisplay(){
       strcat(c, "   ");
           
     printLine1(c);
-    printLine2(e);
 }
 
 /**
@@ -272,7 +241,7 @@ void updateDisplay(){
  * 1. Tune in a signal that is at a known frequency.
  * 2. Now, set the display to show the correct frequency, 
  *    the signal will no longer be tuned up properly
- * 3. Press the CAL_BUTTON line to the ground (pin A2 - red wire)
+ * 3. Press the CAL_BUTTON line to the ground
  * 4. tune in the signal until it sounds proper.
  * 5. Release CAL_BUTTON
  * In step 4, when we say 'sounds proper' then, for a CW signal/carrier it means zero-beat 
@@ -294,30 +263,24 @@ void calibrate(){
     // when you change it's state
     if (digitalRead(CAL_BUTTON) == HIGH){
       mode = MODE_NORMAL;
-      printLine1((char *)"Calibrated      ");
+      printLine1("Calibrated      ");
 
-      //"calibration fix" by Allard, PE1NWL
-      //calculate the correction factor in parts-per-billion (offset in relation to the osc frequency)
-      cal = (cal * -1000000000LL) / (bfo_freq - frequency) ;
-      //apply the correction factor     
-      si5351.set_correction(cal);
-      //Write the 4 bytes of the correction factor into the eeprom memory.
+      //scale the caliberation variable to 10 MHz
+      cal = (cal * 10000000l) / frequency;
+      //Write the 4 bytes into the eeprom memory.
       EEPROM.write(0, (cal & 0xFF));
       EEPROM.write(1, ((cal >> 8) & 0xFF));
       EEPROM.write(2, ((cal >> 16) & 0xFF));
       EEPROM.write(3, ((cal >> 24) & 0xFF));
-      printLine2((char *)"Saved.    ");
+      printLine2("Saved.    ");
       delay(5000);
     }
     else {
       // while the calibration is in progress (CAL_BUTTON is held down), keep tweaking the
       // frequency as read out by the knob, display the chnage in the second line
-      si5351.set_freq((bfo_freq - frequency) * 100LL, SI5351_CLK2); 
+      si5351.set_freq((bfo_freq + cal - frequency) * 100LL,  SI5351_PLL_FIXED, SI5351_CLK2); 
       sprintf(c, "offset:%d ", cal);
       printLine2(c);
-      //calculate the correction factor in ppb and apply it
-      cal = (cal * -1000000000LL) / (bfo_freq - frequency) ;
-      si5351.set_correction(cal);
     }  
 }
 
@@ -346,10 +309,10 @@ void setFrequency(unsigned long f){
   uint64_t osc_f;
   
   if (isUSB){
-    si5351.set_freq((bfo_freq + f) * 100ULL, SI5351_CLK2);
+    si5351.set_freq((bfo_freq + f) * 100ULL, SI5351_PLL_FIXED, SI5351_CLK2);
   }
   else{
-    si5351.set_freq((bfo_freq - f) * 100ULL, SI5351_CLK2);
+    si5351.set_freq((bfo_freq - f) * 100ULL, SI5351_PLL_FIXED, SI5351_CLK2);
   }
 
   frequency = f;
@@ -484,7 +447,7 @@ void checkButton(){
         int count = 0;
         /* track the tuning and return */
         while (btnDown()){
-          frequency = baseTune = ((analogRead(ANALOG_TUNING) * 30000L) + 1000000L);
+          frequency = baseTune = ((analogRead(ANALOG_TUNING) * 30000l) + 1000000l);
           setFrequency(frequency);
           updateDisplay();
           count++;
@@ -503,7 +466,7 @@ void checkButton(){
   // if the button has been down for more thn TAP_HOLD_MILLIS, we consider it a long press
   // set both VFOs to the same frequency, update the display and be done
   if (duration > TAP_HOLD_MILLIS){
-    printLine2((char *)"VFOs reset!");
+    printLine2("VFOs reset!");
     vfoA= vfoB = frequency;
     delay(300);
     updateDisplay();
@@ -528,7 +491,7 @@ void checkButton(){
       vfoA = frequency;
       frequency = vfoB;
     }
-     //printLine2((char *)"VFO swap! ");
+     //printLine2("VFO swap! ");
      delay(600);
      updateDisplay();
     
@@ -547,58 +510,40 @@ void checkButton(){
 /**
  * The Tuning mechansim of the Raduino works in a very innovative way. It uses a tuning potentiometer.
  * The tuning potentiometer that a voltage between 0 and 5 volts at ANALOG_TUNING pin of the control connector.
- * This is read as a value between 0 and 1000. By 100x oversampling ths range is expanded by a factor 10. 
- * Hence, the tuning pot gives you 10,000 steps from one end to the other end of its rotation. Each step is 50 Hz,
- * thus giving maximum 500 Khz of tuning range. The tuning range is scaled down depending on the limit settings.
- * The standard tuning range (for the standard 1-turn pot) is 50 Khz. But it is also possible to use a 10-turn pot
- * to tune accross the entire 40m band. In that case you need to change the values for TUNING_RANGE and baseTune.
+ * This is read as a value between 0 and 1000. Hence, the tuning pot gives you 1000 steps from one end to 
+ * the other end of its rotation. Each step is 50 Hz, thus giving approximately 50 Khz of tuning range.
  * When the potentiometer is moved to either end of the range, the frequency starts automatically moving
  * up or down in 10 Khz increments
  */
 
 void doTuning(){
+ unsigned long newFreq;
  
- long knob = 0;
- // the knob value normally ranges from 0 through 1023 (10 bit ADC)
- // in order to expand the range by a factor 10, we need 10^2 = 100x oversampling
- for (int i = 0; i < 100; i++) {
-  knob = knob + analogRead(ANALOG_TUNING)-10; // take 100 readings from the ADC
- }
- knob = knob / 10L; // take the average of the 100 readings and multiply the result by 10
- //now the knob value ranges from -100 through 10130
+ int knob = analogRead(ANALOG_TUNING)-10;
+ unsigned long old_freq = frequency;
 
   // the knob is fully on the low end, move down by 10 Khz and wait for 200 msec
-  if (knob < -80 && frequency > LOWEST_FREQ) {
-      baseTune = baseTune - 10000L;
-      frequency = baseTune + (50L * knob * TUNING_RANGE / 500);
+ if (knob < 10 && frequency > LOWEST_FREQ) {
+      baseTune = baseTune - 10000l;
+      frequency = baseTune;
       updateDisplay();
       setFrequency(frequency);
       delay(200);
   } 
   // the knob is full on the high end, move up by 10 Khz and wait for 200 msec
-  else if (knob > 10120L && frequency < HIGHEST_FREQ) {
-     baseTune = baseTune + 10000L; 
-     frequency = baseTune + (50L * knob * TUNING_RANGE / 500);
+  else if (knob > 1010 && frequency < HIGHEST_FREQ) {
+     baseTune = baseTune + 10000l; 
+     frequency = baseTune + 50000l;
      setFrequency(frequency);
      updateDisplay();
      delay(200);
   }
-  // the tuning knob is at neither extremities, tune the signals as usual ("flutter fix" by Jerry, KE7ER)
+  // the tuning knob is at neither extremities, tune the signals as usual
   else if (knob != old_knob){
-     static char dir_knob;
-     if ( (knob>old_knob) && ((dir_knob==1) || ((knob-old_knob) >5)) ||
-        (knob<old_knob) && ((dir_knob==0) || ((old_knob-knob) >5)) )   {
-        if (knob>old_knob) {
-           dir_knob=1;
-           frequency = baseTune + (50L * (knob-5) * TUNING_RANGE / 500);
-        } else {
-           dir_knob=0;
-           frequency = baseTune + (50L * knob * TUNING_RANGE / 500);
-        }
-       old_knob = knob;
-       setFrequency(frequency);
-       updateDisplay();
-    }
+     frequency = baseTune + (50l * knob);
+     old_knob = knob;
+     setFrequency(frequency);
+     updateDisplay();
   }
 }
 
@@ -616,13 +561,13 @@ void setup()
   
   lcd.begin(16, 2);
   printBuff[0] = 0;
-  printLine1((char *)"Raduino v1.05"); 
-  printLine2((char *)"             "); 
+  printLine1("Raduino v1.01"); 
+  printLine2("             "); 
     
   // Start serial and initialize the Si5351
   Serial.begin(9600);
   analogReference(DEFAULT);
-  Serial.println("*Raduino booting up\nv1.05\n");
+  Serial.println("*Raduino booting up\nv0.01\n");
 
   //configure the function button to use the external pull-up
   pinMode(FBUTTON, INPUT);
@@ -641,28 +586,20 @@ void setup()
   digitalWrite(TX_RX, 0);
   delay(500);
 
-  //fetch the correction factor from EEPROM
-  EEPROM.get(0, cal);
-  Serial.println("fetched correction factor from EEPROM:");
-  Serial.println(cal);
-  //initialize the SI5351 and apply the correction factor
-  si5351.init(SI5351_CRYSTAL_LOAD_8PF,25000000L,cal);
+  si5351.init(SI5351_CRYSTAL_LOAD_8PF,25000000l);
   
   Serial.println("*Initiliazed Si5351\n");
   
   si5351.set_pll(SI5351_PLL_FIXED, SI5351_PLLA);
   si5351.set_pll(SI5351_PLL_FIXED, SI5351_PLLB);
   Serial.println("*Fixed PLL\n");  
+  //si5351.drive_strength(SI5351_CLK2, SI5351_DRIVE_2MA);
   si5351.output_enable(SI5351_CLK0, 0);
   si5351.output_enable(SI5351_CLK1, 0);
   si5351.output_enable(SI5351_CLK2, 1);
-  //increase the VFO drive level to 4mA to kill the birdie at 7199 kHz
-  //you may try different drive strengths for best results
-  //accepted values are 2,4,6,8 mA
-  si5351.drive_strength(SI5351_CLK2, SI5351_DRIVE_4MA);
-  //
   Serial.println("*Output enabled PLL\n");
-  si5351.set_freq(500000000L , SI5351_CLK2);
+  si5351.set_freq(500000000l ,  SI5351_PLL_FIXED, SI5351_CLK2);   
+  
   Serial.println("*Si5350 ON\n");       
   mode = MODE_NORMAL;
   delay(10);
@@ -674,8 +611,8 @@ void loop(){
    if (digitalRead(CAL_BUTTON) == LOW && mode == MODE_NORMAL){
     mode = MODE_CALIBRATE;    
     si5351.set_correction(0);
-    printLine1((char *)"Calibrating: Set");
-    printLine2((char *)"to zerobeat.    ");
+    printLine1("Calibrating: Set");
+    printLine2("to zerobeat.    ");
     delay(2000);
     return;
   }
@@ -691,3 +628,4 @@ void loop(){
   doTuning(); 
   delay(50); 
 }
+
