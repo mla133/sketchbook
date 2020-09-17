@@ -10,6 +10,7 @@
 //                - properly looked at timings on the Atmel datasheet, and worked out that my delays
 //                  during reads and writes were about 10,000 times too big!
 //                  Reading and writing is now orders-of-magnitude quicker.
+//  17 Sep 2020   - Updated commands to allow upper or lower case (version 0.03)
 //
 // Distributed under an acknowledgement licence, because I'm a shallow, attention-seeking tart. :)
 //
@@ -36,7 +37,7 @@ const char hex[] =
   '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
 };
 
-const char version_string[] = {"EEPROM Version=0.02a"};
+const char version_string[] = {"EEPROM Version=0.03"};
 
 static const int kPin_Addr14  = 22;
 static const int kPin_Addr12  = 23;
@@ -125,12 +126,18 @@ void loop()
     
     switch (g_cmd[0])
     {
-      case 'V': Serial.println(version_string); break;
-      case 'H': Help(); break;
-      case 'P': SetSDPState(true); break;
-      case 'U': SetSDPState(false); break;
-      case 'R': ReadEEPROM(); break;
-      case 'W': WriteEEPROM(); break;
+      case 'V': 
+      case 'v': Serial.println(version_string); break;
+      case 'H': 
+      case 'h': Help(); break;
+      case 'P': 
+      case 'p': SetSDPState(true); break;
+      case 'U': 
+      case 'u': SetSDPState(false); break;
+      case 'R': 
+      case 'r': ReadEEPROM(); break;
+      case 'W': 
+      case 'w': WriteEEPROM(); break;
       case 0: break; // empty string. Don't mind ignoring this.
       default: Serial.println("ERR Unrecognised command"); break;
     }
