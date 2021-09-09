@@ -11,7 +11,12 @@
 //Timer5 will control PL4 (PULSE4 A) and (Pulse4 B) PL3
 
 #include <SPI.h>
-#include <Ethernet2.h>
+//be careful which Ethernet library to use. Arduino.org vs Arduino.cc
+//#include <Ethernet.h>//use for older older ethernet shield
+#include <Ethernet.h> //included in version 1.7.10 of ide
+//reference c:ProgramFiles(86)-Arduino-hardware-tools-avr-avr-include-avr
+//reference c:ProgramFiles(86)-Arduino-hardware-tools-avr-avr-include-avr-iomxx0_1.h
+//be sure Tools-Board is set to correct device
 
 #define A_LEAD_RISE_A        1
 #define A_LEAD_RISE_B        2
@@ -43,11 +48,18 @@
 #define VALVE_TYPE_ANALOG           1
 
 
-// MAC address from Ethernet shield sticker under board, IPAddress set to static IP
-byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA1, 0x9E };
-IPAddress ip(192,168,76,2);
+// MAC address from Ethernet shield sticker under board
+byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0x82, 0x5C };
+IPAddress ip(192,168,181,78);
+EthernetClient client;
 EthernetServer server(80);  // create a server at port 80
 
+int    HTTP_PORT   = 80;
+String HTTP_METHOD = "GET";
+char   HOST_NAME[] = "maker.ifttt.com";
+String PATH_NAME   = "/trigger/arduino_event/with/key/dlOZX5EiFShYRw5kgIxarM"; // change your EVENT-NAME and YOUR-KEY
+
+char queryString[60];
 String HTTP_req;            // stores the HTTP request
 
 void check_pulse1_adjust(void);
@@ -127,24 +139,13 @@ int pulse4LastRise;
 unsigned int pulse4OCRA;
 unsigned int pulse4ValveType;
 
-const char *prompt =
-" _____  _____   ____  _    _  _   _  _____  _____   ______  __  __    ____  \r\n"
-"|_   _||  ___| / ___|| |  | || \\ | ||_   _||  __ \\ |  ____||  \\/  |  / ___| \r\n"
-"  | |  | |__  | |    | |__| ||  \\| |  | |  | |__) || |__   | \\  / | | |     \r\n"
-"  | |  |  __| | |    |  __  || . ` |  | |  |  ___/ |  __|  | |\\/| | | |     \r\n"
-"  | |  | |___ | |___ | |  | || |\\  | _| |_ | |     | |     | |  | | | |___  \r\n"
-"  |_|  |_____| \\____||_|  |_||_| \\_||_____||_|     |_|     |_|  |_|  \\____| \r\n";
-
 void setup() 
 {
-    //to use Ethernet 2 set pin 53 as an output
-    pinMode(53, OUTPUT);
- Serial.begin(115200);
+   //to use Ethernet 2 set pin 53 as an output
+   pinMode(53, OUTPUT);
+   Serial.begin(115200);
 
   //Print Device Information
-
-
-  //Serial.print(prompt);
   Serial.println("\nAccuTest Board - Meter Simulator\n");
 
   Serial.print("MAC Address: ");
@@ -161,31 +162,47 @@ void setup()
            Serial.print("\n");
     }
   }
-
-//  This version assumes using DHCP...
-//  while(!Ethernet.begin(mac))
-//  {
-//    Serial.println("Failed to Get DHCP Address, Trying Again");
-//    delay(2000);
-//  }
-
-    Ethernet.begin(mac,ip);
-    Ethernet.setLocalIP(ip);
+  
+    Ethernet.begin(mac);
+//    Ethernet.setLocalIP(ip);
     
   Serial.print("IP Address:  ");
   for (byte i = 0; i < 4; i++)
   {
     Serial.print(Ethernet.localIP()[i], DEC);
     if(i < 3)
-    {
       Serial.print(".");
-    }
     else
-    {
       Serial.print("\n");
-    }
   }
+     sprintf(queryString, "?value1=%2X:%2X:%2X:%2X:%2X:%2X&value2=%d.%d.%d.%d", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5], Ethernet.localIP()[0],Ethernet.localIP()[1],Ethernet.localIP()[2],Ethernet.localIP()[3]);
     
+  // connect to web server on port 80:
+  if(client.connect(HOST_NAME, HTTP_PORT)) {
+    // if connected:
+    Serial.println("Connected to server");
+    // make a HTTP request:
+    // send HTTP header
+    client.println("GET " + PATH_NAME + queryString + " HTTP/1.1");
+    client.println("Host: " + String(HOST_NAME));
+    client.println("Connection: close");
+    client.println(); // end HTTP header
+
+    while(client.connected()) {
+      if(client.available()){
+        // read an incoming byte from the server and print it to serial monitor:
+        char c = client.read();
+        Serial.print(c);
+      }
+    }
+
+    // the server's disconnected, stop the client:
+    client.stop();
+    Serial.println();
+    Serial.println("disconnected");
+  } else {// if not connected:
+    Serial.println("connection failed");
+  }   
     server.begin();           // start to listen for clients
     //indicate cause of reset
     //Serial.println(MCUSR);
@@ -320,6 +337,9 @@ void loop()
           pulse1AdjustWaitTime = 100;//time in milliseconds
         }
         pulse1AdjustTimeout  = current_millis + pulse1AdjustWaitTime;//maintain last timeout   
+        //Serial.print("time1: ");
+        //Serial.println(pulse1Freq);
+        //Serial.println(pulse1CountAA);
     }
     if((long)(current_millis - pulse2AdjustTimeout) >= 0)
     {
@@ -347,6 +367,9 @@ void loop()
          pulse2AdjustWaitTime = 100;//time in milliseconds
         }
         pulse2AdjustTimeout  = current_millis + pulse2AdjustWaitTime;//maintain last timeout   
+        //Serial.print("time1: ");
+        //Serial.println(pulse1Freq);
+        //Serial.println(pulse1CountAA);
     }
     if((long)(current_millis - pulse3AdjustTimeout) >= 0)
     {
@@ -373,6 +396,9 @@ void loop()
          pulse3AdjustWaitTime = 100;//time in milliseconds
         }
         pulse3AdjustTimeout  = current_millis + pulse3AdjustWaitTime;//maintain last timeout 
+        //Serial.print("time1: ");
+        //Serial.println(pulse1Freq);
+        //Serial.println(pulse1CountAA);
     }
     if((long)(current_millis - pulse4AdjustTimeout) >= 0)
     {
@@ -400,6 +426,9 @@ void loop()
          pulse4AdjustWaitTime = 100;//time in milliseconds
         }
         pulse4AdjustTimeout  = current_millis + pulse4AdjustWaitTime;//maintain last timeout 
+        //Serial.print("time1: ");
+        //Serial.println(pulse1Freq);
+        //Serial.println(pulse1CountAA);
     }
     
     Ethernet_Control(client);
@@ -421,6 +450,8 @@ void check_pulse1_adjust(void)
   _new_max_freq = false; 
   _up = digitalRead(PULSE_1_UPSTREAM);
   _down = digitalRead(PULSE_1_DOWNSTREAM);
+  //Serial.println(_up);
+  //Serial.println(_down);
   
   //H11L1 inverts
   if(_up && !_down)
@@ -437,7 +468,8 @@ void check_pulse1_adjust(void)
     {
        pulse_increase = true;
     } 
-    
+  //Serial.println(pulse1OutFunctionReq);
+  //Serial.println(pulse1OutFunction);
   if(pulse_increase) 
   {
      if(pulse1Freq == 0)
@@ -476,6 +508,8 @@ void check_pulse1_adjust(void)
     i++; //delay
     pulse1OCRA = ocr;
     TIMSK1 |= (1<<OCIE1A);//reenable interrupt
+    //Serial.print("OCR:");
+    //Serial.println(OCR1A);
  }  
 }  
 //pulse 2
@@ -495,6 +529,8 @@ void check_pulse2_adjust(void)
   _new_max_freq = false;
   _up = digitalRead(PULSE_2_UPSTREAM);
   _down = digitalRead(PULSE_2_DOWNSTREAM);
+  //Serial.println(_up);
+  //Serial.println(_down);
   
     //H11L1 inverts
   if(_up && !_down)
@@ -557,6 +593,8 @@ void check_pulse2_adjust(void)
     i++; //delay
     pulse2OCRA = ocr;
     TIMSK3 |= (1<<OCIE3A);//reenable interrupt
+    //Serial.print("OCR:");
+    //Serial.println(OCR1A);
  }
 }  
 
@@ -576,6 +614,8 @@ void check_pulse3_adjust(void)
   _new_max_freq = false;
   _up = digitalRead(PULSE_3_UPSTREAM);
   _down = digitalRead(PULSE_3_DOWNSTREAM);
+  //Serial.println(_up);
+  //Serial.println(_down);
   
     //H11L1 inverts
   if(_up && !_down)
@@ -638,6 +678,8 @@ void check_pulse3_adjust(void)
     i++;//delay
     pulse3OCRA = ocr;
     TIMSK4 |= (1<<OCIE4A);//reenable interrupt
+    //Serial.print("OCR:");
+    //Serial.println(OCR1A);
  } 
 } 
 
@@ -657,6 +699,8 @@ void check_pulse4_adjust(void)
   _new_max_freq = false;
   _up = digitalRead(PULSE_4_UPSTREAM);
   _down = digitalRead(PULSE_4_DOWNSTREAM);
+  //Serial.println(_up);
+  //Serial.println(_down);
   
    //H11L1 inverts
   if(_up && !_down)
@@ -717,6 +761,8 @@ void check_pulse4_adjust(void)
     i++;//delay
     pulse4OCRA = ocr;
     TIMSK5 |= (1<<OCIE5A);//reenable interrupt
+    //Serial.print("OCR:");
+    //Serial.println(OCR1A);
  } 
 } 
 
@@ -926,7 +972,8 @@ void Ana_Valve_Pulse4(void)
 
 /**********************************************************************************/
 void Ethernet_Control(EthernetClient client) 
-{  
+{
+  //Serial.print("Hi Chuck");  
     client = server.available();  // try to get client
     int i =0;
     
@@ -948,51 +995,70 @@ void Ethernet_Control(EthernetClient client)
                     client.println("Content-Type: text/html");
                     client.println("Connection: keep-alive");
                     client.println();
-                
+                     //Serial.print(HTTP_req);                
                     // AJAX request for switch state
                     if (HTTP_req.indexOf("ajax_pulse") > -1)
                     {
-                        // read switch state and analog input
+                         // read switch state and analog input
+                        //Serial.print(HTTP_req);
                         GetAjaxData(client);
                     }
                     else if(HTTP_req.indexOf("mtr1.txt")> -1)
                     {
                       pulse1OutFunctionReq = pulse_function_out(HTTP_req);
+                      //client.println(numSelects);//chuck
+                      //Serial.print(pulse1OutFunctionReq);//chuck
                     }
                      else if(HTTP_req.indexOf("mtr2.txt")> -1)
                     {
                        pulse2OutFunctionReq = pulse_function_out(HTTP_req);
+                      //client.println(numSelects2);//chuck
+                      //Serial.print(HTTP_req);//chuck
                     }
                       else if(HTTP_req.indexOf("mtr3.txt")> -1)
                     {
-                      pulse3OutFunctionReq = pulse_function_out(HTTP_req); 
+                      pulse3OutFunctionReq = pulse_function_out(HTTP_req);
+                      //client.println(numSelects3);//chuck
+                      //Serial.print(HTTP_req);//chuck
                     }
                     else if(HTTP_req.indexOf("mtr4.txt")> -1)
                     {
                       pulse4OutFunctionReq = pulse_function_out(HTTP_req);
+                      //client.println(numSelects4);//chuck
+                      //Serial.print(HTTP_req);//chuck
                     }
                     else if(HTTP_req.indexOf("m1sld.txt") > -1)
-                    {                      
+                    {
+                      //Serial.print(HTTP_req);//chuck
                       pulse1MaxFreq = freq_string_to_int(HTTP_req);
+                      //Serial.print(pulse1MaxFreq);
                     }
                     else if(HTTP_req.indexOf("m2sld.txt") > -1)
                     {
+                      //Serial.print(HTTP_req);//chuck
                       pulse2MaxFreq = freq_string_to_int(HTTP_req);
+                      //Serial.print(pulse1MaxFreq);
                     }
                     else if(HTTP_req.indexOf("m3sld.txt") > -1)
                     {
+                      //Serial.print(HTTP_req);//chuck
                       pulse3MaxFreq = freq_string_to_int(HTTP_req);
+                      //Serial.print(pulse1MaxFreq);
                     }
                     else if(HTTP_req.indexOf("m4sld.txt") > -1)
                     {
+                      //Serial.print(HTTP_req);//chuck
                       pulse4MaxFreq = freq_string_to_int(HTTP_req);
+                      //Serial.print(pulse1MaxFreq);
                     }
-                    /*else if(HTTP_req.indexOf("vlv1.txt")> -1)
+                    else if(HTTP_req.indexOf("vlv1.txt")> -1)
                     {
                       if(HTTP_req.indexOf("Ana") > -1)
                         pulse1ValveType = VALVE_TYPE_ANALOG;
                       else 
                         pulse1ValveType = VALVE_TYPE_DIGITAL;
+                      //client.println(numSelects);//chuck
+                      Serial.print(pulse1ValveType);//chuck
                     }
                      else if(HTTP_req.indexOf("vlv2.txt")> -1)
                     {
@@ -1000,6 +1066,8 @@ void Ethernet_Control(EthernetClient client)
                         pulse2ValveType = VALVE_TYPE_ANALOG;
                       else 
                         pulse2ValveType = VALVE_TYPE_DIGITAL;
+                      //client.println(numSelects2);//chuck
+                      //Serial.print(HTTP_req);//chuck
                     }
                       else if(HTTP_req.indexOf("vlv3.txt")> -1)
                     {
@@ -1007,6 +1075,8 @@ void Ethernet_Control(EthernetClient client)
                         pulse3ValveType = VALVE_TYPE_ANALOG;
                       else 
                         pulse3ValveType = VALVE_TYPE_DIGITAL;
+                      //client.println(numSelects3);//chuck
+                      //Serial.print(HTTP_req);//chuck
                     }
                     else if(HTTP_req.indexOf("vlv4.txt")> -1)
                     {
@@ -1014,7 +1084,9 @@ void Ethernet_Control(EthernetClient client)
                         pulse4ValveType = VALVE_TYPE_ANALOG;
                       else 
                         pulse4ValveType = VALVE_TYPE_DIGITAL;
-                    }*/
+                      //client.println(numSelects4);//chuck
+                      //Serial.print(HTTP_req);//chuck
+                    }
                     else
                     {  // HTTP request for web page
                         // send web page - contains JavaScript with AJAX calls
@@ -1024,7 +1096,8 @@ void Ethernet_Control(EthernetClient client)
                         client.println("<title>Meter 1-4 Control Web Page</title>");
                         client.println("<script>");
                         client.println("function GetPulseCountData() {");
-                        client.println("nocache = \"&nocache=\" + Math.random() * 1000000;"); 
+                        client.println(
+                            "nocache = \"&nocache=\" + Math.random() * 1000000;"); 
                         client.println("var request = new XMLHttpRequest();");
                         client.println("request.onreadystatechange = function() {");
                         client.println("if (this.readyState == 4) {");
@@ -1032,103 +1105,117 @@ void Ethernet_Control(EthernetClient client)
                         client.println("if (this.responseText != null) {");
                         client.println("document.getElementById(\"pulse_data\").innerHTML = this.responseText;");
                         client.println("}}}}");
-                        client.println("request.open(\"GET\", \"ajax_pulse\" + nocache, true);");
+                        client.println(
+                        "request.open(\"GET\", \"ajax_pulse\" + nocache, true);");
                         client.println("request.send(null);");
-                        client.println("setTimeout('GetPulseCountData()', 1000);");
+                        client.println("setTimeout('GetPulseCountData()', 1000);");//client.println("setTimeout('GetPulseCountData()', 1000);");
                         client.println("}");
-                        /*
+                        /***/
                         //Meter Valve 1 Selection
-                        client.println("function valveSelect1(str) {");
-                        client.println("xmlhttp=new XMLHttpRequest();");    
-                        client.println("xmlhttp.open(\"GET\",\"vlv1.txt?q=\"+str,true);");
-                        client.println("xmlhttp.send();");
-                        client.println("}");//end of function valveSelect1(str) 
-                        //Meter Valve 2 Selection
-                        client.println("function valveSelect2(str) {");
-                        client.println("xmlhttp=new XMLHttpRequest();");    
-                        client.println("xmlhttp.open(\"GET\",\"vlv2.txt?q=\"+str,true);");
-                        client.println("xmlhttp.send();");
-                        client.println("}");//end of function valveSelect2(str) 
-                        //Meter Valve 3 Selection
-                        client.println("function valveSelect3(str) {");
-                        client.println("xmlhttp=new XMLHttpRequest();");    
-                        client.println("xmlhttp.open(\"GET\",\"vlv3.txt?q=\"+str,true);");
-                        client.println("xmlhttp.send();");
-                        client.println("}");//end of function valveSelect3(str) 
-                        //Meter Valve 4 Selection
-                        client.println("function valveSelect4(str) {");
-                        client.println("xmlhttp=new XMLHttpRequest();");    
-                        client.println("xmlhttp.open(\"GET\",\"vlv4.txt?q=\"+str,true);");
-                        client.println("xmlhttp.send();");
-                        client.println("}");//end of function valveSelect4(str) 
-                        */
-                        //Mter 1 pulse Selection
-                        client.println("function pulseSelect1(str) {");
-                        client.println("xmlhttp=new XMLHttpRequest();");    
-                        client.println("xmlhttp.open(\"GET\",\"mtr1.txt?q=\"+str,true);");
-                        client.println("xmlhttp.send();");
-                        client.println("}");//end of function pulseSelect1(str) 
-                        //Meter 2 Pulse Selection 
-                        client.println("function pulseSelect2(str) {");
-                        client.println("xmlhttp=new XMLHttpRequest();");   
-                        client.println("xmlhttp.open(\"GET\",\"mtr2.txt?q=\"+str,true);");
-                        client.println("xmlhttp.send();");
-                        client.println("}");//end of function pulseSelect2(str) 
-                        //Meter 3 Pulse Selection
-                        client.println("function pulseSelect3(str) {");
-                        client.println("xmlhttp=new XMLHttpRequest();");    
-                        client.println("xmlhttp.open(\"GET\",\"mtr3.txt?q=\"+str,true);");
-                        client.println("xmlhttp.send();");
-                        client.println("}");//end of function pulseSelect3(str) 
-                        //Meter 4 Pulse Selection
-                        client.println("function pulseSelect4(str) {");
-                        client.println("xmlhttp=new XMLHttpRequest();");    
-                        client.println("xmlhttp.open(\"GET\",\"mtr4.txt?q=\"+str,true);");
-                        client.println("xmlhttp.send();");
-                        client.println("}");//end of function pulseSelect4(str) 
+                      client.println("function valveSelect1(str) {");
+                      client.println("xmlhttp=new XMLHttpRequest();");    
+                      //client.println("document.getElementById(\"pulse1\").selectedIndex;");
+                      client.println("xmlhttp.open(\"GET\",\"vlv1.txt?q=\"+str,true);");
+                      //client.println("xmlhttp.open(\"GET\", \"getcustomer.asp?q=\" + str, true);");
+                      client.println("xmlhttp.send();");
+                      client.println("}");//end of function valveSelect1(str) 
+                      //Meter Valve 2 Selection
+                      client.println("function valveSelect2(str) {");
+                      client.println("xmlhttp=new XMLHttpRequest();");    
+                      //client.println("document.getElementById(\"pulse1\").selectedIndex;");
+                      client.println("xmlhttp.open(\"GET\",\"vlv2.txt?q=\"+str,true);");
+                      //client.println("xmlhttp.open(\"GET\", \"getcustomer.asp?q=\" + str, true);");
+                      client.println("xmlhttp.send();");
+                      client.println("}");//end of function valveSelect2(str) 
+                      //Meter Valve 3 Selection
+                      client.println("function valveSelect3(str) {");
+                      client.println("xmlhttp=new XMLHttpRequest();");    
+                      //client.println("document.getElementById(\"pulse1\").selectedIndex;");
+                      client.println("xmlhttp.open(\"GET\",\"vlv3.txt?q=\"+str,true);");
+                      //client.println("xmlhttp.open(\"GET\", \"getcustomer.asp?q=\" + str, true);");
+                      client.println("xmlhttp.send();");
+                      client.println("}");//end of function valveSelect3(str) 
+                      //Meter Valve 4 Selection
+                      client.println("function valveSelect4(str) {");
+                      client.println("xmlhttp=new XMLHttpRequest();");    
+                      //client.println("document.getElementById(\"pulse1\").selectedIndex;");
+                      client.println("xmlhttp.open(\"GET\",\"vlv4.txt?q=\"+str,true);");
+                      //client.println("xmlhttp.open(\"GET\", \"getcustomer.asp?q=\" + str, true);");
+                      client.println("xmlhttp.send();");
+                      client.println("}");//end of function valveSelect4(str) 
+                       /***/
+                       //Mter 1 pulse Selection
+                      client.println("function pulseSelect1(str) {");
+                      client.println("xmlhttp=new XMLHttpRequest();");    
+                      //client.println("document.getElementById(\"pulse1\").selectedIndex;");
+                      client.println("xmlhttp.open(\"GET\",\"mtr1.txt?q=\"+str,true);");
+                      //client.println("xmlhttp.open(\"GET\", \"getcustomer.asp?q=\" + str, true);");
+                      client.println("xmlhttp.send();");
+                      client.println("}");//end of function pulseSelect1(str) 
+                    //Meter 2 Pulse Selection 
+                      client.println("function pulseSelect2(str) {");
+                      client.println("xmlhttp=new XMLHttpRequest();");   
+                      client.println("xmlhttp.open(\"GET\",\"mtr2.txt?q=\"+str,true);");
+                      //client.println("xmlhttp.open(\"GET\", \"getcustomer.asp?q=\" + str, true);");
+                      client.println("xmlhttp.send();");
+                      client.println("}");//end of function pulseSelect2(str) 
+                      //Meter 3 Pulse Selection
+                       client.println("function pulseSelect3(str) {");
+                       client.println("xmlhttp=new XMLHttpRequest();");    
+                      client.println("xmlhttp.open(\"GET\",\"mtr3.txt?q=\"+str,true);");
+                      //client.println("xmlhttp.open(\"GET\", \"getcustomer.asp?q=\" + str, true);");
+                      client.println("xmlhttp.send();");
+                      client.println("}");//end of function pulseSelect3(str) 
+                      //Meter 4 Pulse Selection
+                       client.println("function pulseSelect4(str) {");
+                       client.println("xmlhttp=new XMLHttpRequest();");    
+                      client.println("xmlhttp.open(\"GET\",\"mtr4.txt?q=\"+str,true);");
+                      //client.println("xmlhttp.open(\"GET\", \"getcustomer.asp?q=\" + str, true);");
+                      client.println("xmlhttp.send();");
+                      client.println("}");//end of function pulseSelect4(str) 
                       
-                        //start of meter 1 slider() 
-                        client.println("function updateSlider1(slideAmount)");
-                        client.println("{");
-                        client.println("var xmlhttp= new XMLHttpRequest();");  
-                        client.println("var sliderDiv = document.getElementById(\"slider1\");");
-                        client.println("document.getElementById(\"slider1\").innerHTML= \"Meter 1 = \"+slideAmount+\" Hz\";");
-                        client.println("xmlhttp.open(\"GET\",\"m1sld.txt?q=\"+slideAmount,true);");
-                        client.println("xmlhttp.send();");
-                        client.println("}");
-                        //end of meter 1 slider 
-                        //start of meter 2 slider() 
-                        client.println("function updateSlider2(slideAmount)");
-                        client.println("{");
-                        client.println("var xmlhttp= new XMLHttpRequest();");  
-                        client.println("var sliderDiv = document.getElementById(\"slider2\");");
-                        client.println("document.getElementById(\"slider2\").innerHTML= \"Meter 2 = \"+slideAmount+\" Hz\";");
-                        client.println("xmlhttp.open(\"GET\",\"m2sld.txt?q=\"+slideAmount,true);");
-                        client.println("xmlhttp.send();");
-                        client.println("}");
-                        //end of meter 2 slider 
-                        //start of meter 3 slider() 
-                        client.println("function updateSlider3(slideAmount)");
-                        client.println("{");
-                        client.println("var xmlhttp= new XMLHttpRequest();");  
-                        client.println("var sliderDiv = document.getElementById(\"slider3\");");
-                        client.println("document.getElementById(\"slider3\").innerHTML= \"Meter 3 = \"+slideAmount+\" Hz\";");
-                        client.println("xmlhttp.open(\"GET\",\"m3sld.txt?q=\"+slideAmount,true);");
-                        client.println("xmlhttp.send();");
-                        client.println("}");
-                        //end of meter 3 slider 
-                        //start of meter 4 slider() 
-                        client.println("function updateSlider4(slideAmount)");
-                        client.println("{");
-                        client.println("var xmlhttp= new XMLHttpRequest();");  
-                        client.println("var sliderDiv = document.getElementById(\"slider4\");");
-                        client.println("document.getElementById(\"slider4\").innerHTML= \"Meter 4 = \"+slideAmount+\" Hz\";");
-                        client.println("xmlhttp.open(\"GET\",\"m4sld.txt?q=\"+slideAmount,true);");
-                        client.println("xmlhttp.send();");
-                        client.println("}");
-                        //end of meter 4 slider 
+                      //start of meter 1 slider() 
+                     client.println("function updateSlider1(slideAmount)");
+                     client.println("{");
+                     client.println("var xmlhttp= new XMLHttpRequest();");  
+                     client.println("var sliderDiv = document.getElementById(\"slider1\");");
+                     client.println("document.getElementById(\"slider1\").innerHTML= \"Meter 1 = \"+slideAmount+\" Hz\";");
+                     client.println("xmlhttp.open(\"GET\",\"m1sld.txt?q=\"+slideAmount,true);");
+                     client.println("xmlhttp.send();");
+                     client.println("}");
+                    //end of meter 1 slider 
+                    //start of meter 2 slider() 
+                     client.println("function updateSlider2(slideAmount)");
+                     client.println("{");
+                     client.println("var xmlhttp= new XMLHttpRequest();");  
+                     client.println("var sliderDiv = document.getElementById(\"slider2\");");
+                     client.println("document.getElementById(\"slider2\").innerHTML= \"Meter 2 = \"+slideAmount+\" Hz\";");
+                     client.println("xmlhttp.open(\"GET\",\"m2sld.txt?q=\"+slideAmount,true);");
+                     client.println("xmlhttp.send();");
+                     client.println("}");
+                    //end of meter 2 slider 
+                    //start of meter 3 slider() 
+                     client.println("function updateSlider3(slideAmount)");
+                     client.println("{");
+                     client.println("var xmlhttp= new XMLHttpRequest();");  
+                     client.println("var sliderDiv = document.getElementById(\"slider3\");");
+                     client.println("document.getElementById(\"slider3\").innerHTML= \"Meter 3 = \"+slideAmount+\" Hz\";");
+                     client.println("xmlhttp.open(\"GET\",\"m3sld.txt?q=\"+slideAmount,true);");
+                     client.println("xmlhttp.send();");
+                     client.println("}");
+                    //end of meter 3 slider 
+                    //start of meter 4 slider() 
+                     client.println("function updateSlider4(slideAmount)");
+                     client.println("{");
+                     client.println("var xmlhttp= new XMLHttpRequest();");  
+                     client.println("var sliderDiv = document.getElementById(\"slider4\");");
+                     client.println("document.getElementById(\"slider4\").innerHTML= \"Meter 4 = \"+slideAmount+\" Hz\";");
+                     client.println("xmlhttp.open(\"GET\",\"m4sld.txt?q=\"+slideAmount,true);");
+                     client.println("xmlhttp.send();");
+                     client.println("}");
+                    //end of meter 4 slider 
                         
-                        /****************************************/
+                        /****/
                         client.println("</script>");
                         client.println("</head>");
                         client.println("<body onload=\"GetPulseCountData()\">");
@@ -1136,8 +1223,8 @@ void Ethernet_Control(EthernetClient client)
                         client.println("<div id=\"pulse_data\">");
                         client.println("</div>");
                         /****************************************/
-                       /*Start of Valve Selections
-                       //Start table for Meter Valve selections
+                        //Start of Valve Selections
+                          //Start table for Meter Valve selections
                        client.println("<br>");
                        client.println("<table style=\"width:40%\">");
                        client.println("<tr>");
@@ -1149,7 +1236,9 @@ void Ethernet_Control(EthernetClient client)
                        client.println("<option value=\"Dig\">Digital 210</option>");
                        client.println("<option value=\"Ana\">Analog</option>");
                        client.println("</select>");
-                       client.println("</form>");;
+                       client.println("</form>");
+                       //client.println("<br>");
+                       //client.println("<div id=\"txtHint\">""</div>");
                        client.println("</td>");
                        //select list Valve 2
                        client.println("<td>");
@@ -1160,6 +1249,8 @@ void Ethernet_Control(EthernetClient client)
                        client.println("<option value=\"Ana\">Analog</option>");
                        client.println("</select>");
                        client.println("</form>");
+                       //client.println("<br>");
+                       //client.println("<div id=\"txtHint\">""</div>");
                        client.println("</td>");
                        //select list Valve 3
                        client.println("<td>");
@@ -1170,6 +1261,8 @@ void Ethernet_Control(EthernetClient client)
                        client.println("<option value=\"Ana\">Analog</option>");
                        client.println("</select>");
                        client.println("</form>");
+                       //client.println("<br>");
+                       //client.println("<div id=\"txtHint\">""</div>");
                        client.println("</td>");
                         //select list Valve 4
                       client.println("<td>");
@@ -1180,42 +1273,38 @@ void Ethernet_Control(EthernetClient client)
                        client.println("<option value=\"Ana\">Analog</option>");
                        client.println("</select>");
                        client.println("</form>");
+                       //client.println("<br>");
+                       //client.println("<div id=\"txtHint\">""</div>");
                        client.println("</td>");
                        //end od table
                        client.println("</tr");
                        //client.println("</form>");
                        client.println("</table>");
-                        End of Valve Selections*/
+                        //End of Valve Selections
                         /***************************************/
                        //Start table for Meter Pulse selections
-                       client.println("<table>");
+                       //client.println("<br>");
+                       client.println("<table style=\"width:40%\">");
                        client.println("<tr>");
-                       //select list meter 1
+                         //select list meter 1
                        client.println("<td>");
                        client.println("<p>Meter 1 Pulse</p>");
                        client.println("<form action=\"\" method=\"get\">"); 
-
-                       client.println("<select name=\"pulse1\" onchange=\"pulseSelect1(this.value)\">");                       
+                       client.println("<select name=\"pulse1\" onchange=\"pulseSelect1(this.value)\">");
                        client.println("<option value=\"A0\">A Lead B</option>");
                        client.println("<option value=\"B1\">B Lead A</option>");
                        client.println("<option value=\"C2\">A Only</option>");
                        client.println("<option value=\"D3\">B Only</option>");
-//                       client.println("<option value=\"E4\">A Lead B Leak</option>");
-//                       client.println("<option value=\"F5\">B Lead A Leak</option>");
-//                       client.println("<option value=\"G6\">A Only Leak</option>");
-//                       client.println("<option value=\"H7\">B Only Leak</option>");
-//                       client.println("<option value=\"I8\">Clear Counts</option>");
-                       client.println("</select><br><br>");
-                       
-                       client.println("<button type=\"button\" value=\"E4\" onclick=\"pulseSelect1(this.value)\">A->B Leak</button>");
-                       client.println("<button type=\"button\" value=\"F5\" onclick=\"pulseSelect1(this.value)\">B->A Leak</button><br><br>");
-//                       client.println("<button type=\"button\" value=\"G6\" onclick=\"pulseSelect1(this.value)\">A Leak</button>");
-//                       client.println("<button type=\"button\" value=\"H7\" onclick=\"pulseSelect1(this.value)\">B Leak</button><br><br>");
-                       client.println("<button type=\"button\" value=\"A0\" onclick=\"pulseSelect1(this.value)\">Stop Leak</button>");
-                       client.println("<button type=\"button\" value=\"I8\" onclick=\"pulseSelect1(this.value)\">Clear</button><br>");
+                       client.println("<option value=\"E4\">A Lead B Leak</option>");
+                       client.println("<option value=\"F5\">B Lead A Leak</option>");
+                       client.println("<option value=\"G6\">A Only Leak</option>");
+                       client.println("<option value=\"H7\">B Only Leak</option>");
+                       client.println("<option value=\"I8\">Clear Counts</option>");
+                       client.println("</select>");
                        client.println("</form>");
+                       //client.println("<br>");
+                       //client.println("<div id=\"txtHint\">""</div>");
                        client.println("</td>");
-                       
                        //select list meter 2
                        client.println("<td>");
                        client.println("<p>Meter 2 Pulse</p>");
@@ -1225,21 +1314,16 @@ void Ethernet_Control(EthernetClient client)
                        client.println("<option value=\"B1\">B Lead A</option>");
                        client.println("<option value=\"C2\">A Only</option>");
                        client.println("<option value=\"D3\">B Only</option>");
-//                       client.println("<option value=\"E4\">A Lead B Leak</option>");
-//                       client.println("<option value=\"F5\">B Lead A Leak</option>");
-//                       client.println("<option value=\"G6\">A Only Leak</option>");
-//                       client.println("<option value=\"H7\">B Only Leak</option>");
-//                       client.println("<option value=\"I8\">Clear Counts</option>");
-                       client.println("</select><br><br>");
-                       client.println("<button type=\"button\" value=\"E4\" onclick=\"pulseSelect2(this.value)\">A->B Leak</button>");
-                       client.println("<button type=\"button\" value=\"F5\" onclick=\"pulseSelect2(this.value)\">B->A Leak</button><br><br>");
-//                       client.println("<button type=\"button\" value=\"G6\" onclick=\"pulseSelect2(this.value)\">A Leak</button>");
-//                       client.println("<button type=\"button\" value=\"H7\" onclick=\"pulseSelect2(this.value)\">B Leak</button><br><br>");
-                       client.println("<button type=\"button\" value=\"A0\" onclick=\"pulseSelect2(this.value)\">Stop Leak</button>");
-                       client.println("<button type=\"button\" value=\"I8\" onclick=\"pulseSelect2(this.value)\">Clear</button><br>");
+                       client.println("<option value=\"E4\">A Lead B Leak</option>");
+                       client.println("<option value=\"F5\">B Lead A Leak</option>");
+                       client.println("<option value=\"G6\">A Only Leak</option>");
+                       client.println("<option value=\"H7\">B Only Leak</option>");
+                       client.println("<option value=\"I8\">Clear Counts</option>");
+                       client.println("</select>");
                        client.println("</form>");
+                       //client.println("<br>");
+                       //client.println("<div id=\"txtHint\">""</div>");
                        client.println("</td>");
-                       
                        //select list meter 3
                        client.println("<td>");
                        client.println("<p>Meter 3 Pulse</p>");
@@ -1249,22 +1333,16 @@ void Ethernet_Control(EthernetClient client)
                        client.println("<option value=\"B1\">B Lead A</option>");
                        client.println("<option value=\"C2\">A Only</option>");
                        client.println("<option value=\"D3\">B Only</option>");
-//                       client.println("<option value=\"E4\">A Lead B Leak</option>");
-//                       client.println("<option value=\"F5\">B Lead A Leak</option>");
-//                       client.println("<option value=\"G6\">A Only Leak</option>");
-//                       client.println("<option value=\"H7\">B Only Leak</option>");
-//                       client.println("<option value=\"I8\">Clear Counts</option>");
-                       client.println("</select><br><br>");
-                       client.println("<button type=\"button\" value=\"E4\" onclick=\"pulseSelect3(this.value)\">A->B Leak</button>");
-                       client.println("<button type=\"button\" value=\"F5\" onclick=\"pulseSelect3(this.value)\">B->A Leak</button><br><br>");
-//                       client.println("<button type=\"button\" value=\"G6\" onclick=\"pulseSelect3(this.value)\">A Leak</button>");
-//                       client.println("<button type=\"button\" value=\"H7\" onclick=\"pulseSelect3(this.value)\">B Leak</button><br><br>");
-                       client.println("<button type=\"button\" value=\"A0\" onclick=\"pulseSelect3(this.value)\">Stop Leak</button>");
-                       client.println("<button type=\"button\" value=\"I8\" onclick=\"pulseSelect3(this.value)\">Clear</button><br>");
+                       client.println("<option value=\"E4\">A Lead B Leak</option>");
+                       client.println("<option value=\"F5\">B Lead A Leak</option>");
+                       client.println("<option value=\"G6\">A Only Leak</option>");
+                       client.println("<option value=\"H7\">B Only Leak</option>");
+                       client.println("<option value=\"I8\">Clear Counts</option>");
+                       client.println("</select>");
                        client.println("</form>");
+                       //client.println("<br>");
+                       //client.println("<div id=\"txtHint\">""</div>");
                        client.println("</td>");
-
-                       
                         //select list meter 4
                        client.println("<td>");
                        client.println("<p>Meter 4 Pulse</p>");
@@ -1274,26 +1352,24 @@ void Ethernet_Control(EthernetClient client)
                        client.println("<option value=\"B1\">B Lead A</option>");
                        client.println("<option value=\"C2\">A Only</option>");
                        client.println("<option value=\"D3\">B Only</option>");
-//                       client.println("<option value=\"E4\">A Lead B Leak</option>");
-//                       client.println("<option value=\"F5\">B Lead A Leak</option>");
-//                       client.println("<option value=\"G6\">A Only Leak</option>");
-//                       client.println("<option value=\"H7\">B Only Leak</option>");
-//                       client.println("<option value=\"I8\">Clear Counts</option>");
-                       client.println("</select><br><br>");
-                       client.println("<button type=\"button\" value=\"E4\" onclick=\"pulseSelect4(this.value)\">A->B Leak</button>");
-                       client.println("<button type=\"button\" value=\"F5\" onclick=\"pulseSelect4(this.value)\">B->A Leak</button><br><br>");
-//                       client.println("<button type=\"button\" value=\"G6\" onclick=\"pulseSelect4(this.value)\">A Leak</button>");
-//                       client.println("<button type=\"button\" value=\"H7\" onclick=\"pulseSelect4(this.value)\">B Leak</button><br><br>");
-                       client.println("<button type=\"button\" value=\"A0\" onclick=\"pulseSelect4(this.value)\">Stop Leak</button>");
-                       client.println("<button type=\"button\" value=\"I8\" onclick=\"pulseSelect4(this.value)\">Clear</button><br>");
+                       client.println("<option value=\"E4\">A Lead B Leak</option>");
+                       client.println("<option value=\"F5\">B Lead A Leak</option>");
+                       client.println("<option value=\"G6\">A Only Leak</option>");
+                       client.println("<option value=\"H7\">B Only Leak</option>");
+                       client.println("<option value=\"I8\">Clear Counts</option>");
+                       client.println("</select>");
                        client.println("</form>");
+                       //client.println("<br>");
+                       //client.println("<div id=\"txtHint\">""</div>");
                        client.println("</td>");
                        //end od table
                        client.println("</tr");
+                       //client.println("</form>");
                        client.println("</table>");
                        //start table for slides to set frequency
                        //slider meter 1        
-                       client.println("<table>");
+                       //client.println("<br> <br> <br>");
+                       client.println("<table style=\"width:70%\">");
                        client.println("<tr>");
                        client.println("<td>");
                        client.println("<p>Meter 1 Freq Adjust</p>");
@@ -1342,6 +1418,7 @@ void Ethernet_Control(EthernetClient client)
                         client.println("</html>");
                     }
                     // display received HTTP request on serial port
+                    //Serial.print(HTTP_req);
                     HTTP_req = "";            // finished with request, empty string
                     break;//while loop
                 }
@@ -1364,12 +1441,10 @@ void Ethernet_Control(EthernetClient client)
     } // end if (client)
 }
 
-/********************************************************************************/
-
 void GetAjaxData(EthernetClient cl)
 {
-   cl.println("<table>"); 
-   //cl.println("<table style=\"width:50%\">");
+  //cl.println("<table style="width:100"%>"); 
+   cl.println("<table style=\"width:50%\">");
    cl.println("<tr>");
    cl.println("<td>");
    cl.println(" ");
@@ -1484,6 +1559,7 @@ unsigned int freq_string_to_int(String HTTP_req_arg)
    }
    if(valid)
      freq = (unsigned int)my_string.toInt();
+   //Serial.println(freq);
    return(freq);
 }
 
@@ -1510,6 +1586,9 @@ int pulse_function_out(String HTTP_req_arg)
     func = POF_B_ONLY_LEAK;
    else if(HTTP_req_arg.indexOf("I8") > -1)
     func = POF_CLEAR_COUNTS;  
+ //Serial.println("");   
+ //Serial.println(func);
+ //Serial.println("");
   return(func);
 }
 

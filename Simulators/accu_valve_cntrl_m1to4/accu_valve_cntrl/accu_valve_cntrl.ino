@@ -49,8 +49,10 @@
 
 
 // MAC address from Ethernet shield sticker under board
-byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xC6, 0x8C };//byte mac[] = { 0x90, 0xA2, 0xDA, 0x00, 0xCC, 0xBA };
-IPAddress ip(192, 168, 181, 78); // IP address, may need to change depending on network (ip(10, 0, 0, 20);)
+byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA1, 0x9E };
+//byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA1, 0x5A };
+
+IPAddress ip(192, 168, 76, 2); // IP address, may need to change depending on network (ip(10, 0, 0, 20);)
 EthernetServer server(80);  // create a server at port 80
 
 String HTTP_req;            // stores the HTTP request
@@ -149,7 +151,7 @@ void setup()
   //Print Device Information
 
 
-  Serial.print(prompt);
+  //Serial.print(prompt);
   Serial.println("\nAccuTest Board - Meter Simulator\n");
 
   Serial.print("MAC Address: ");
@@ -167,11 +169,14 @@ void setup()
     }
   }
 
-  while(!Ethernet.begin(mac))
-  {
-    Serial.println("Failed to Get DHCP Address, Trying Again");
-    delay(2000);
-  }
+//  while(!Ethernet.begin(mac))
+//  {
+//    Serial.println("Failed to Get DHCP Address, Trying Again");
+//    delay(2000);
+//  }
+
+  Ethernet.begin(mac,ip);
+  Ethernet.setLocalIP(ip);
 
   Serial.print("IP Address:  ");
   for (byte i = 0; i < 4; i++)

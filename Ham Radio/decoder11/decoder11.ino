@@ -19,10 +19,11 @@
 //  LiquidCrystal lcd(RS, E, D4, D5, D6, D7) //
 ///////////////////////////////////////////////
 
+//LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
 const int colums = 20; /// have to be 16 or 20
-const int rows = 4;  /// have to be 2 or 4
+const int rows = 2;  /// have to be 2 or 4
 
 int lcdindex = 0;
 int line1[colums];
@@ -32,13 +33,13 @@ int line2[colums];
 // Define 8 specials letters  //
 ////////////////////////////////
 
-byte U_umlaut[8] =   {B01010,B00000,B10001,B10001,B10001,B10001,B01110,B00000}; // 'Ü'  
-byte O_umlaut[8] =   {B01010,B00000,B01110,B10001,B10001,B10001,B01110,B00000}; // 'Ö'  
-byte A_umlaut[8] =   {B01010,B00000,B01110,B10001,B11111,B10001,B10001,B00000}; // 'Ä'    
-byte AE_capital[8] = {B01111,B10100,B10100,B11110,B10100,B10100,B10111,B00000}; // 'Æ' 
-byte OE_capital[8] = {B00001,B01110,B10011,B10101,B11001,B01110,B10000,B00000}; // 'Ø' 
+byte U_umlaut[8] =   {B01010,B00000,B10001,B10001,B10001,B10001,B01110,B00000}; // '�'  
+byte O_umlaut[8] =   {B01010,B00000,B01110,B10001,B10001,B10001,B01110,B00000}; // '�'  
+byte A_umlaut[8] =   {B01010,B00000,B01110,B10001,B11111,B10001,B10001,B00000}; // '�'    
+byte AE_capital[8] = {B01111,B10100,B10100,B11110,B10100,B10100,B10111,B00000}; // '�' 
+byte OE_capital[8] = {B00001,B01110,B10011,B10101,B11001,B01110,B10000,B00000}; // '�' 
 byte fullblock[8] =  {B11111,B11111,B11111,B11111,B11111,B11111,B11111,B11111};  
-byte AA_capital[8] = {B00100,B00000,B01110,B10001,B11111,B10001,B10001,B00000}; // 'Å'   
+byte AA_capital[8] = {B00100,B00000,B01110,B10001,B11111,B10001,B10001,B00000}; // '�'   
 byte emtyblock[8] =  {B00000,B00000,B00000,B00000,B00000,B00000,B00000,B00000};  
 
 int audioInPin = A1;
@@ -165,7 +166,7 @@ void setup() {
   Q2 = 0;
   Q1 = 0;
 
-  Serial.print(magnitude); Serial.println();  //// here you can measure magnitude for setup..
+  //Serial.print(magnitude); Serial.println();  //// here you can measure magnitude for setup..
   
   /////////////////////////////////////////////////////////// 
   // here we will try to set the magnitude limit automatic //
