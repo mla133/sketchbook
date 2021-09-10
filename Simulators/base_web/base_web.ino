@@ -12,8 +12,8 @@
 
 #include <SPI.h>
 //be careful which Ethernet library to use. Arduino.org vs Arduino.cc
-//#include <Ethernet.h>//use for older older ethernet shield
-#include <Ethernet2.h> //included in version 1.7.10 of ide
+#include <Ethernet.h>//use for older older ethernet shield
+//#include <Ethernet2.h> //included in version 1.7.10 of ide
 //reference c:ProgramFiles(86)-Arduino-hardware-tools-avr-avr-include-avr
 //reference c:ProgramFiles(86)-Arduino-hardware-tools-avr-avr-include-avr-iomxx0_1.h
 //be sure Tools-Board is set to correct device
@@ -49,8 +49,8 @@
 
 
 // MAC address from Ethernet shield sticker under board
-byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA1, 0x2D };
-//IPAddress ip(192,168,181,78);
+byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA1, 0x5A };
+IPAddress ip(192,168,76,2);
 EthernetServer server(80);  // create a server at port 80
 
 String HTTP_req;            // stores the HTTP request
@@ -165,14 +165,14 @@ void setup()
     }
   }
 
-  while(!Ethernet.begin(mac))
-  {
-    Serial.println("Failed to Get DHCP Address, Trying Again");
-    delay(2000);
-  }
+//  while(!Ethernet.begin(mac))
+//  {
+//    Serial.println("Failed to Get DHCP Address, Trying Again");
+//    delay(2000);
+//  }
 
-//    Ethernet.begin(mac,ip);
-//    Ethernet.setLocalIP(ip);
+    Ethernet.begin(mac,ip);
+    Ethernet.setLocalIP(ip);
     
   Serial.print("IP Address:  ");
   for (byte i = 0; i < 4; i++)
@@ -1451,16 +1451,16 @@ void GetAjaxData(EthernetClient cl)
    cl.println("<td>");
    cl.println("Meter 1:");
    cl.println("</td>");
-   cl.println("<td>");
+   cl.println("<td id=\"pulse1CountA\">");
    cl.println(pulse1CountA);
    cl.println("</td>");
-   cl.println("<td>");
+   cl.println("<td id=\"pulse1CountB\">");
    cl.println(pulse1CountB);
    cl.println("</td>");
-   cl.println("<td>");
+   cl.println("<td id=\"pulse1Error\">");
    cl.println(pulse1Error);
    cl.println("</td>");
-   cl.println("<td>");
+   cl.println("<td id=\"pulse1Freq\">");
    cl.println(pulse1Freq);
    cl.println("</td>");
    cl.println("</tr>");
@@ -1469,16 +1469,16 @@ void GetAjaxData(EthernetClient cl)
    cl.println("<td>");
    cl.println("Meter 2:");
    cl.println("</td>");
-   cl.println("<td>");
+   cl.println("<td id=\"pulse2CountA\">");
    cl.println(pulse2CountA);
    cl.println("</td>");
-   cl.println("<td>");
+   cl.println("<td id=\"pulse2CountB\">");
    cl.println(pulse2CountB);
    cl.println("</td>");
-   cl.println("<td>");
+   cl.println("<td id=\"pulse2Error\">");
    cl.println(pulse2Error);
    cl.println("</td>");
-   cl.println("<td>");
+   cl.println("<td id=\"pulse2Freq\">");
    cl.println(pulse2Freq);
    cl.println("</td>");
    cl.println("</tr>");
@@ -1487,16 +1487,16 @@ void GetAjaxData(EthernetClient cl)
    cl.println("<td>");
    cl.println("Meter 3:");
    cl.println("</td>");
-   cl.println("<td>");
+   cl.println("<td id=\"pulse3CountA\">");
    cl.println(pulse3CountA);
    cl.println("</td>");
-   cl.println("<td>");
+   cl.println("<td id=\"pulse3CountB\">");
    cl.println(pulse3CountB);
    cl.println("</td>");
-   cl.println("<td>");
+   cl.println("<td id=\"pulse3Error\">");
    cl.println(pulse3Error);
    cl.println("</td>");
-   cl.println("<td>");
+   cl.println("<td id=\"pulse3Freq\">");
    cl.println(pulse3Freq);
    cl.println("</td>");
    cl.println("</tr>");
@@ -1505,16 +1505,16 @@ void GetAjaxData(EthernetClient cl)
    cl.println("<td>");
    cl.println("Meter 4:");
    cl.println("</td>");
-   cl.println("<td>");
+   cl.println("<td id=\"pulse4CountA\">");
    cl.println(pulse4CountA);
    cl.println("</td>");
-   cl.println("<td>");
+   cl.println("<td id=\"pulse4CountB\">");
    cl.println(pulse4CountB);
    cl.println("</td>");
-   cl.println("<td>");
+   cl.println("<td id=\"pulse4Error\">");
    cl.println(pulse4Error);
    cl.println("</td>");
-   cl.println("<td>");
+   cl.println("<td id=\"pulse4Freq\">");
    cl.println(pulse4Freq);
    cl.println("</td>");
    cl.println("</tr>");
