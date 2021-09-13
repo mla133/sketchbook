@@ -1429,7 +1429,7 @@ void Ethernet_Control(EthernetClient client)
 void GetAjaxData(EthernetClient cl)
 {
   //cl.println("<table style="width:100"%>"); 
-   cl.println("<table style=\"width:50%\">");
+   cl.println("<table id=\"pulseTable\" style=\"width:50%\">");
    cl.println("<tr>");
    cl.println("<td>");
    cl.println(" ");
