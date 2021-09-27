@@ -49,8 +49,15 @@
 
 
 // MAC address from Ethernet shield sticker under board
+
+// Home AccuTest Board:
 byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA1, 0x5A };
 IPAddress ip(192,168,76,2);
+
+// Office AccuTest Board:
+//byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA1, 0x2D };
+//IPAddress ip(192,168,181,78);
+
 EthernetServer server(80);  // create a server at port 80
 
 String HTTP_req;            // stores the HTTP request
