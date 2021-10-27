@@ -51,8 +51,8 @@
 // MAC address from Ethernet shield sticker under board
 
 // Home AccuTest Board:
-byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA1, 0x5A };
-IPAddress ip(192,168,76,2);
+byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA2, 0x24 };
+IPAddress ip(192,168,76,4);
 
 // Office AccuTest Board:
 //byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA1, 0x2D };
@@ -151,7 +151,7 @@ void setup()
 {
    //to use Ethernet 2 set pin 53 as an output
    pinMode(53, OUTPUT);
-   Serial.begin(115200);
+   Serial.begin(9600);
 
   //Print Device Information
   //Serial.print(prompt);
@@ -790,10 +790,7 @@ void Ana_Valve_Pulse1(void)
   _adch = ADCH;
   _ad_counts = (unsigned int)(_adch << 8);
   _ad_counts |= (unsigned int)(_adcl);
-  Serial.println(_ad_counts);
-  Serial.println(ADCSRB);
-  Serial.println(ADMUX);
-  Serial.println("");
+
   if(_ad_counts < (unsigned int)MIN_AD_COUNTS)
     pulse1Freq = (unsigned int) 0;
   else if(_ad_counts >= (unsigned int)MAX_AD_COUNTS)
