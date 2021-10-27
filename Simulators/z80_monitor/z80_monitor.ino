@@ -1,9 +1,6 @@
-
 #include <z80retroshield.h>
 
-//
 // Our program.
-//
 unsigned char memory[1024] =
 {
     0x31, 0xfb, 0x00, 0x3e, 0x3e, 0xd3, 0x01, 0x21, 0xfb, 0x00, 0x36, 0x0a, 0xdb, 0x01, 0x77, 0xfe,
@@ -25,20 +22,13 @@ unsigned char memory[1024] =
 };
 int memory_len = sizeof(memory) / sizeof(memory[0]);
 
-//
 // Scratch area for format-strings.
-//
 char tmp[64] = { '\0' };
 
-//
 // Our helper
-//
 Z80RetroShield cpu;
 
-
-//
 // RAM I/O function handler.
-//
 char memory_read(int address)
 {
     if (address >= 0 && address < memory_len)
@@ -51,9 +41,7 @@ char memory_read(int address)
     }
 }
 
-//
 // RAM I/O function handler.
-//
 void memory_write(int address, byte value)
 {
     if (address >= 0 && address < memory_len)
@@ -65,27 +53,20 @@ void memory_write(int address, byte value)
     }
 }
 
-
-//
 // I/O function handler.
-//
 char io_read(int address)
 {
     if (address == 1)
     {
         char r;
-
-        //
+        
         // Ensure there is at least one character available.
-        //
         while (! Serial.available())
         {
             delay(1);
         }
 
-        //
         // Read and return the character.
-        //
         r = Serial.read();
         return (r);
     }
@@ -98,9 +79,7 @@ char io_read(int address)
     return 0;
 }
 
-//
 // I/O function handler.
-//
 void io_write(int address, char byte)
 {
     if (address == 1)
@@ -114,31 +93,21 @@ void io_write(int address, char byte)
     }
 }
 
-
-//
 // Setup routine: Called once.
-//
 void setup()
 {
     Serial.begin(115200);
 
-
-    //
     // Setup callbacks for memory read/writes.
-    //
     cpu.set_ram_read(memory_read);
     cpu.set_ram_write(memory_write);
 
-    //
     // Now setup a callback to be executed every time an IN/OUT
     // instruction is encountered.
-    //
     cpu.set_io_read(io_read);
     cpu.set_io_write(io_write);
 
-    //
     // Configured.
-    //
     Serial.println("Z80 configured; launching program.");
     Serial.println("Simple Monitor example program v1.0");
     Serial.println("D1000 - Dump 16 bytes of RAM at 0x1000");
@@ -146,14 +115,9 @@ void setup()
     Serial.println("C1000 - Call routine at 0x1000");
 }
 
-
-//
 // Loop function: Called forever.
-//
 void loop()
 {
-    //
     // Step the CPU.
-    //
     cpu.Tick();
 }
