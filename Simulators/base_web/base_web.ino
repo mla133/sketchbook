@@ -1227,61 +1227,61 @@ void Ethernet_Control(EthernetClient client)
                         /****************************************/
                         //Start of Valve Selections
                           //Start table for Meter Valve selections
-                       client.println("<br>");
-                       client.println("<table style=\"width:40%\">");
-                       client.println("<tr>");
-                         //select list valve 1 
-                       client.println("<td>");
-                       client.println("<p>Meter 1 Valve</p>");
-                       client.println("<form action=\"\" method=\"get\">"); 
-                       client.println("<select name=\"valve1\" onchange=\"valveSelect1(this.value)\">");
-                       client.println("<option value=\"Dig\">Digital 210</option>");
-                       client.println("<option value=\"Ana\">Analog</option>");
-                       client.println("</select>");
-                       client.println("</form>");
-                       //client.println("<br>");
-                       //client.println("<div id=\"txtHint\">""</div>");
-                       client.println("</td>");
-                       //select list Valve 2
-                       client.println("<td>");
-                      client.println("<p>Meter 2 Valve</p>");
-                       client.println("<form action=\"\" method=\"get\">"); 
-                       client.println("<select name=\"valve2\" onchange=\"valveSelect2(this.value)\">");
-                       client.println("<option value=\"Dig\">Digital 210</option>");
-                       client.println("<option value=\"Ana\">Analog</option>");
-                       client.println("</select>");
-                       client.println("</form>");
-                       //client.println("<br>");
-                       //client.println("<div id=\"txtHint\">""</div>");
-                       client.println("</td>");
-                       //select list Valve 3
-                       client.println("<td>");
-                       client.println("<p>Meter 3 Valve</p>");
-                       client.println("<form action=\"\" method=\"get\">"); 
-                       client.println("<select name=\"valve3\" onchange=\"valveSelect3(this.value)\">");
-                       client.println("<option value=\"Dig\">Digital 210</option>");
-                       client.println("<option value=\"Ana\">Analog</option>");
-                       client.println("</select>");
-                       client.println("</form>");
-                       //client.println("<br>");
-                       //client.println("<div id=\"txtHint\">""</div>");
-                       client.println("</td>");
-                        //select list Valve 4
-                      client.println("<td>");
-                      client.println("<p>Meter 4 Valve</p>");
-                       client.println("<form action=\"\" method=\"get\">"); 
-                       client.println("<select name=\"valve4\" onchange=\"valveSelect4(this.value)\">");
-                       client.println("<option value=\"Dig\">Digital 210</option>");
-                       client.println("<option value=\"Ana\">Analog</option>");
-                       client.println("</select>");
-                       client.println("</form>");
-                       //client.println("<br>");
-                       //client.println("<div id=\"txtHint\">""</div>");
-                       client.println("</td>");
-                       //end od table
-                       client.println("</tr");
-                       //client.println("</form>");
-                       client.println("</table>");
+//                       client.println("<br>");
+//                       client.println("<table style=\"width:40%\">");
+//                       client.println("<tr>");
+//                         //select list valve 1 
+//                       client.println("<td>");
+//                       client.println("<p>Meter 1 Valve</p>");
+//                       client.println("<form action=\"\" method=\"get\">"); 
+//                       client.println("<select name=\"valve1\" onchange=\"valveSelect1(this.value)\">");
+//                       client.println("<option value=\"Dig\">Digital 210</option>");
+//                       client.println("<option value=\"Ana\">Analog</option>");
+//                       client.println("</select>");
+//                       client.println("</form>");
+//                       //client.println("<br>");
+//                       //client.println("<div id=\"txtHint\">""</div>");
+//                       client.println("</td>");
+//                       //select list Valve 2
+//                       client.println("<td>");
+//                      client.println("<p>Meter 2 Valve</p>");
+//                       client.println("<form action=\"\" method=\"get\">"); 
+//                       client.println("<select name=\"valve2\" onchange=\"valveSelect2(this.value)\">");
+//                       client.println("<option value=\"Dig\">Digital 210</option>");
+//                       client.println("<option value=\"Ana\">Analog</option>");
+//                       client.println("</select>");
+//                       client.println("</form>");
+//                       //client.println("<br>");
+//                       //client.println("<div id=\"txtHint\">""</div>");
+//                       client.println("</td>");
+//                       //select list Valve 3
+//                       client.println("<td>");
+//                       client.println("<p>Meter 3 Valve</p>");
+//                       client.println("<form action=\"\" method=\"get\">"); 
+//                       client.println("<select name=\"valve3\" onchange=\"valveSelect3(this.value)\">");
+//                       client.println("<option value=\"Dig\">Digital 210</option>");
+//                       client.println("<option value=\"Ana\">Analog</option>");
+//                       client.println("</select>");
+//                       client.println("</form>");
+//                       //client.println("<br>");
+//                       //client.println("<div id=\"txtHint\">""</div>");
+//                       client.println("</td>");
+//                        //select list Valve 4
+//                      client.println("<td>");
+//                      client.println("<p>Meter 4 Valve</p>");
+//                       client.println("<form action=\"\" method=\"get\">"); 
+//                       client.println("<select name=\"valve4\" onchange=\"valveSelect4(this.value)\">");
+//                       client.println("<option value=\"Dig\">Digital 210</option>");
+//                       client.println("<option value=\"Ana\">Analog</option>");
+//                       client.println("</select>");
+//                       client.println("</form>");
+//                       //client.println("<br>");
+//                       //client.println("<div id=\"txtHint\">""</div>");
+//                       client.println("</td>");
+//                       //end od table
+//                       client.println("</tr");
+//                       //client.println("</form>");
+//                       client.println("</table>");
                         //End of Valve Selections
                         /***************************************/
                        //Start table for Meter Pulse selections
