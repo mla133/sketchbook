@@ -51,10 +51,10 @@
 //byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA2, 0x24 }; // Home AccuTest Board
 //byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA1, 0x2D }; // Office AccuTest Board
 //byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA1, 0xBB }; // ALIV AccuTest Board #1 (COM 6)
-//byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA2, 0xA2 }; // ALIV AccuTest Board #2 (COM 13)
+byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA2, 0xA2 }; // ALIV AccuTest Board #2 (COM 13)
+//byte mac[] = { 0xFB, 0xFD, 0xF5, 0xF2, 0xF4, 0xF8 };  // A4M/A4B Portable ALIV
 
-byte mac[] = { 0xFB, 0xFD, 0xF5, 0xF2, 0xF4, 0xF8 };  // A4M/A4B Portable ALIV
-IPAddress ip(192,168,181,74);
+IPAddress ip(192,168,181,78);
 EthernetServer server(80);  // create a server at port 80
 
 String HTTP_req;            // stores the HTTP request
@@ -1205,7 +1205,23 @@ void Ethernet_Control(EthernetClient client)
                         client.println("</script>");
                         client.println("</head>");
                         client.println("<body onload=\"GetPulseCountData()\">");
-                        client.println("<h1>Meter Pulse Data (1-4)</h1>");
+                        //client.println("<h1>Meter Pulse Data (1-4)</h1>");
+                        client.println("<h2>MAC Address: ");
+                        for (byte i = 0; i < sizeof(mac); i++)
+                          {
+                            client.print(mac[i], HEX);
+                            
+                            if(i < (sizeof(mac) - 1))
+                            {
+                              client.print("-");
+                            }
+                            else
+                            {
+                                   client.print("\n");
+                            }
+                          }
+                        client.println("</h2>");
+                        
                         client.println("<div id=\"pulse_data\">");
                         client.println("</div>");
                         /****************************************/
