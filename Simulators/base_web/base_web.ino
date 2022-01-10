@@ -30,34 +30,31 @@
 #define MAX_FREQ_HZ          (unsigned long)1100
 #define MIN_FREQ_ANA_VALVE   (unsigned long) 3
 
-#define POF_A_LEAD_B      0
-#define POF_B_LEAD_A      1
-#define POF_A_ONLY        2
-#define POF_B_ONLY        3
-#define POF_A_LEAD_B_LEAK 4
-#define POF_B_LEAD_A_LEAK 5
-#define POF_A_ONLY_LEAK   6
-#define POF_B_ONLY_LEAK   7
-#define POF_CLEAR_COUNTS  8
+#define POF_A_LEAD_B          0
+#define POF_B_LEAD_A          1
+#define POF_A_ONLY            2
+#define POF_B_ONLY            3
+#define POF_A_LEAD_B_LEAK     4
+#define POF_B_LEAD_A_LEAK     5
+#define POF_A_ONLY_LEAK       6
+#define POF_B_ONLY_LEAK       7
+#define POF_CLEAR_COUNTS      8
 
 #define LAST_RISE_EDGE_NONE   0
 #define LAST_RISE_EDGE_A      1
 #define LAST_RISE_EDGE_B      2
 
-#define VALVE_TYPE_DIGITAL          0
-#define VALVE_TYPE_ANALOG           1
-
+#define VALVE_TYPE_DIGITAL    0
+#define VALVE_TYPE_ANALOG     1
 
 // MAC address from Ethernet shield sticker under board
+//byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA2, 0x24 }; // Home AccuTest Board
+//byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA1, 0x2D }; // Office AccuTest Board
+//byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA1, 0xBB }; // ALIV AccuTest Board #1 (COM 6)
+//byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA2, 0xA2 }; // ALIV AccuTest Board #2 (COM 13)
 
-// Home AccuTest Board:
-byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA2, 0x24 };
-IPAddress ip(192,168,76,4);
-
-// Office AccuTest Board:
-//byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA1, 0x2D };
-//IPAddress ip(192,168,181,78);
-
+byte mac[] = { 0xFB, 0xFD, 0xF5, 0xF2, 0xF4, 0xF8 };  // A4M/A4B Portable ALIV
+IPAddress ip(192,168,181,74);
 EthernetServer server(80);  // create a server at port 80
 
 String HTTP_req;            // stores the HTTP request
