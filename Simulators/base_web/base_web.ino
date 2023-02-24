@@ -48,13 +48,13 @@
 #define VALVE_TYPE_ANALOG     1
 
 // MAC address from Ethernet shield sticker under board
-//byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA2, 0x24 }; // Home AccuTest Board
-//byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA1, 0x2D }; // Office AccuTest Board
-//byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA1, 0xBB }; // ALIV AccuTest Board #1 (COM 6)
-byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA2, 0xA2 }; // ALIV AccuTest Board #2 (COM 13)
-//byte mac[] = { 0xFB, 0xFD, 0xF5, 0xF2, 0xF4, 0xF8 };  // A4M/A4B Portable ALIV
+//byte mac[] = { 0xF3, 0xF1, 0xF7, 0xF6, 0xF7, 0xF1 };  // Accuload III.NET Accutest (COM 22, 192.168.76.71)
+//byte mac[] = { 0xF4, 0xF1, 0xF7, 0xF6, 0xF7, 0xF5 };  // Accuload IV Accutest #1 (COM 37, 192.168.76.75)
+//byte mac[] = { 0xFF, 0xF1, 0xF7, 0xF6, 0xF7, 0xF9 };  // microLoad.NET Accutest (COM 31, 192.168.76.79)
+//byte mac[] = { 0x90, 0xa2, 0xda, 0x10, 0xa2, 0x60 };  // Ian's Double-stack Accutest (COM 24, 192.168.181.184)
+byte mac[] = { 0x90, 0xa2, 0xda, 0x10, 0xa1, 0x93 };  // Ian's Single-stack Accutest (COM 35, 192.168.181.185)
 
-IPAddress ip(192,168,181,78);
+IPAddress ip(192,168,181,185);
 EthernetServer server(80);  // create a server at port 80
 
 String HTTP_req;            // stores the HTTP request
