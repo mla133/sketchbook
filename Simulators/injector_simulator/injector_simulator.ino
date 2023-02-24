@@ -23,6 +23,7 @@ char response[MAX_BUF];
 char tempBuf[MAX_TMP_BUF];
 char add_buf[ADDR_SIZE];
 char command[MAX_BUF];
+char alarm_mask[5] = " 0000";
 String buf = "";
 bool buf_recv = false;
 double NRT_1, NRT_2, NRT_3, NRT_4, pulse_1, pulse_2, pulse_3, pulse_4 = 0;
@@ -55,12 +56,11 @@ void loop() {
 
     // Parse buffer, supply response buffer
     if ( strncmp ("IN", tempBuf+3, 2) == 0 ) {
-      //Serial.print("IN found: ");
+      Serial.print("IN found: ");
       if (inj_address < 400) {
-        NRT_1 += 0.013;     //Serial.print(NRT_1, 3); Serial.print(" | ");
-        pulse_1 += 65.0;    //Serial.print(pulse_1, 0); Serial.print(" | ");
-        sol_1 = ON;         //Serial.println(sol_1);
-        
+        NRT_1 += 0.013;     Serial.print(NRT_1, 3); Serial.print(" | ");
+        pulse_1 += 65.0;    Serial.print(pulse_1, 0); Serial.print(" | ");
+        sol_1 = ON;         Serial.println(sol_1);
       }
 
       memset(response,0,sizeof(response));
@@ -70,30 +70,32 @@ void loop() {
       response[strlen(response)] = ETX;
       response[strlen(response)] = GetLRC(response+1, strlen(response-1));
       response[strlen(response)] = PAD;
-      //Serial.println(GetLRC(response+1, strlen(response-1)));
-      //Serial.println(strlen(response));
-      Serial.println(response);
       injSerial.write(response);
 
     }
     else if ( strncmp ("TS", tempBuf+3, 2) == 0) {
       if (inj_address < 400) {
-        Serial.println("TS found: ");
+        Serial.print("TS found: ");  Serial.print(NRT_1, 3); Serial.print(" | ");
+        Serial.print(alarm_mask); Serial.print(" | "); Serial.println(sol_1);
         sol_1 = OFF;
-        strcat(response, "TS ");
-        numStr = String(NRT_1, 3); 
-        strcat(response, numStr.c_str());
-        strcat(response, " 0000");
-        strcat(response, 0x03);
-        strcat(response, GetLRC(response, strlen(response)));
-        Serial.println(response);
-        //injSerial.print(s_response);
+      }
+
+      memset(response,0,sizeof(response));
+      response[0] = STX;
+      strcat(response, add_buf);
+      strcat(response, "TS ");
+      numStr = String(NRT_1, 3); 
+      strcat(response, numStr.c_str());
+      strcat(response, alarm_mask);
+      response[strlen(response)] = ETX;
+      response[strlen(response)] = GetLRC(response+1, strlen(response-1));
+      response[strlen(response)] = PAD;
+      injSerial.print(response);
       }
     }
-
-  }
-  memset(response,0,MAX_BUF);
-  numStr = "";
+    
+    memset(response,0,MAX_BUF);
+    numStr = "";
 }
 
 bool readSerial() {
