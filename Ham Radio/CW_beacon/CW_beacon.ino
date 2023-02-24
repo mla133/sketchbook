@@ -58,15 +58,16 @@ struct t_mtab morsetab[] = {
 
 #define N_MORSE  (sizeof(morsetab)/sizeof(morsetab[0]))
 
-#define SPEED  (12)
+#define SPEED  (15)
 #define DOTLEN  (1200/SPEED)
 #define DASHLEN  (3*(1200/SPEED))
 
 int LEDpin = 13 ;
 
+const char *message = "TEST TEST DE KC3EYS KC3EYS KC3EYS";
+
 void
-dash()
-{
+dash(){
   digitalWrite(LEDpin, HIGH) ;
   delay(DASHLEN);
   digitalWrite(LEDpin, LOW) ;
@@ -74,8 +75,7 @@ dash()
 }
 
 void
-dit()
-{
+dit(){
   digitalWrite(LEDpin, HIGH) ;
   delay(DOTLEN);
   digitalWrite(LEDpin, LOW) ;
@@ -83,8 +83,7 @@ dit()
 }
 
 void
-send(char c)
-{
+send(char c) {
   int i ;
   if (c == ' ') {
     Serial.print(c) ;
@@ -111,9 +110,7 @@ send(char c)
   Serial.print("?") ;
 }
 
-void
-sendmsg(char *str)
-{
+void sendmsg(char *str){
   while (*str)
     send(*str++) ;
   Serial.println("");
@@ -128,6 +125,6 @@ void setup() {
 }
 
 void loop() {
-  sendmsg("KC3EYS/B FN02") ;
+  sendmsg(message);
   delay(3000) ;
 }
