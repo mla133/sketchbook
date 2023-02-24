@@ -4,17 +4,17 @@
 // Not all pins on the Mega and Mega 2560 support change interrupts,
 // so only the following can be used for RX when using SoftwareSerial pins:
 // 10, 11, 12, 13, 50, 51, 52, 53, 62, 63, 64, 65, 66, 67, 68, 69
-//#ifndef BYTE
-//  #define BYTE unsigned char
-//#endif
+#ifndef BYTE
+  #define BYTE unsigned char
+#endif
 
 #define MAX_BUF 25
 #define MAX_TMP_BUF 40
 #define ADDR_SIZE 3
-#define STX 0x02
-#define ETX 0x03
-#define PAD 0x7F
-#define NUL 0x00
+BYTE STX = 0x02;
+BYTE ETX = 0x03;
+BYTE PAD = 0x7F;
+BYTE NUL = 0x00;
 
 #include <SoftwareSerial.h>
 SoftwareSerial injSerial(3,2,true); // RX, TX, INVERT --> Arduino inverts TTL signals
@@ -62,20 +62,18 @@ void loop() {
         sol_1 = ON;         //Serial.println(sol_1);
         
       }
+
       memset(response,0,sizeof(response));
-      injSerial.write(0x02);
-      memcpy(response, add_buf, 2);
-      memcpy(response+2, "OK", 2);
-      response[4] = 0x03;
-      response[5] = 0x04;
-      //memcpy(response+5, GetLRC(response, 4), 1);
+      response[0] = STX;
+      strcat(response, add_buf);
+      strcat(response, "OK");
+      response[strlen(response)] = ETX;
+      response[strlen(response)] = GetLRC(response+1, strlen(response-1));
+      response[strlen(response)] = PAD;
+      //Serial.println(GetLRC(response+1, strlen(response-1)));
+      //Serial.println(strlen(response));
       Serial.println(response);
-      Serial.println(GetLRC(response, 4), HEX);
-      for (int i=0; i<6;i++) {
-        injSerial.write(response[i]);
-      }
-      //injSerial.write(response);
-//      memcpy(response, add_buf, 2);
+      injSerial.write(response);
 
     }
     else if ( strncmp ("TS", tempBuf+3, 2) == 0) {
