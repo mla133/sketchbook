@@ -1,8 +1,8 @@
 #include <SPI.h>
 #include <Ethernet.h>
 
-byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA1, 0x5A };
-IPAddress ip(192,168,76,51);
+byte mac[] = { 0x90, 0xA2, 0xDA, 0x10, 0xA2, 0x24 };
+IPAddress ip(192,168,181,71);
 EthernetServer server(80);
 
 const int outputLED = 53;
@@ -39,6 +39,27 @@ void loop() {
           client.println("<html>");
           client.println("<title>Example Webserver</title>");
           client.println("<p>Hello World!</p>");
+          for (byte i = 0; i < 4; i++)
+          {
+             client.print(Ethernet.localIP()[i], DEC);
+             if(i<3)
+             {
+              client.print(".");
+             }
+             else
+             {
+              client.println("");
+             }
+          }
+          client.print("<h1>Analogue Values</h1>");
+          for (int analogChannel = 0; analogChannel < 6; analogChannel++) {
+            int sensorReading = analogRead(analogChannel);
+            client.print("analog input ");
+            client.print(analogChannel);
+            client.print(" is ");
+            client.print(sensorReading);
+            client.println("<br />");
+          }
           client.println("</html>");
           break;
         }
