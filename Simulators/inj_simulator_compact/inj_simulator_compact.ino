@@ -70,23 +70,23 @@ void loop() {
 
     }
     else if ( strncmp ("TS", tempBuf+3, 2) == 0) {
-      if (inj_address < 400) {
-        Serial.print("TS found: ");  Serial.print(NRT_1, 3); Serial.print(" |");
-        Serial.print(alarm_mask); Serial.print(" | "); Serial.println(sol_1);
-        sol_1 = OFF;
-      }
-      //Response:  <STX><ADDR><"TS #.### HHHH"><ETX><LRC><PAD>
-      memset(response,0,sizeof(response));
-      response[0] = STX;
-      strcat(response, add_buf);
-      strcat(response, "TS ");
-      numStr = String(NRT_1, 3); 
-      strcat(response, numStr.c_str());
-      strcat(response, alarm_mask);
-      response[strlen(response)] = ETX;
-      response[strlen(response)] = GetLRC(response+1, strlen(response-1));
-      response[strlen(response)] = PAD;
-      injSerial.print(response);
+      sol_1 = OFF;
+
+      sprintf(response, "%c%02d%s%f%s%c", STX, inj_address, "TS ", NRT_1, alarm_mask, ETX);
+      sprintf(response, "%s%c%c", response, GetLRC(response+1,strlen(response)), PAD);
+      injSerial.write(response);
+      
+//      memset(response,0,sizeof(response));
+//      response[0] = STX;
+//      strcat(response, add_buf);
+//      strcat(response, "TS ");
+//      numStr = String(NRT_1, 3); 
+//      strcat(response, numStr.c_str());
+//      strcat(response, alarm_mask);
+//      response[strlen(response)] = ETX;
+//      response[strlen(response)] = GetLRC(response+1, strlen(response-1));
+//      response[strlen(response)] = PAD;
+//      injSerial.print(response);
       }
     }
     
