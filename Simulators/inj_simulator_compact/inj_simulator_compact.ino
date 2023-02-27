@@ -72,21 +72,11 @@ void loop() {
     else if ( strncmp ("TS", tempBuf+3, 2) == 0) {
       sol_1 = OFF;
 
-      sprintf(response, "%c%02d%s%f%s%c", STX, inj_address, "TS ", NRT_1, alarm_mask, ETX);
+      sprintf(response, "%c%02d%s%s%s%c", STX, inj_address, "TS ", String(NRT_1,3).c_str(), alarm_mask, ETX);
       sprintf(response, "%s%c%c", response, GetLRC(response+1,strlen(response)), PAD);
+      Serial.println(response);
       injSerial.write(response);
       
-//      memset(response,0,sizeof(response));
-//      response[0] = STX;
-//      strcat(response, add_buf);
-//      strcat(response, "TS ");
-//      numStr = String(NRT_1, 3); 
-//      strcat(response, numStr.c_str());
-//      strcat(response, alarm_mask);
-//      response[strlen(response)] = ETX;
-//      response[strlen(response)] = GetLRC(response+1, strlen(response-1));
-//      response[strlen(response)] = PAD;
-//      injSerial.print(response);
       }
     }
     
